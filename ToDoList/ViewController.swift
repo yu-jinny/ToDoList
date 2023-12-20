@@ -7,58 +7,72 @@
 
 import UIKit
 
+struct Todo {
+    var title: String
+    var isCompleted: Bool
+}
+
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     @IBOutlet weak var toDoListTableView: UITableView!
     @IBOutlet weak var addNewListButton: UIButton!
     
-    var toDoMemo : [String] = ["할 일1", "할 일 2", "할 일 3"]
-    
+    var toDoMemo: [Todo] = [
+           Todo(title: "할 일 1", isCompleted: false),
+           Todo(title: "할 일 2", isCompleted: false),
+           Todo(title: "할 일 3", isCompleted: true)
+       ]
+       
     override func viewDidLoad() {
         super.viewDidLoad()
         toDoListTableView.backgroundColor = .yellow
         toDoListTableView.delegate = self
         toDoListTableView.dataSource = self
-        addNewListButton.addTarget(self, action: #selector(addNewListButtonTapped), for: .touchUpInside)
     }
     
     @IBAction func addNewListButtonTapped(_ sender: Any) {
-        showAddTodoMessage()
-    }
-    
-    func showAddTodoMessage() {
-        let alert = UIAlertController(title: "할 일 추가", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "할 일을 입력하세요"
-        }
-        
-        let addAction = UIAlertAction(title: "추가", style: .default) { [weak self] _ in
-            if let textField = alert.textFields?.first, let newTodo = textField.text, !newTodo.isEmpty {
-                self?.addTodo(newTodo)
-            }
-        }
-        
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel, handler: nil)
-        
-        alert.addAction(addAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true, completion: nil)
-    }
-    
-    func addTodo(_ todo: String) {
-        toDoMemo.append(todo)
-        toDoListTableView.reloadData()
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return toDoMemo.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoCell", for: indexPath)
-        cell.textLabel?.text = toDoMemo[indexPath.row]
-        return cell
-    }
+        addNewTodo()
+          }
+          
+          func addNewTodo() {
+              let newTodo = Todo(title: "", isCompleted: false)
+              toDoMemo.append(newTodo)
+              
+              let indexPath = IndexPath(row: toDoMemo.count - 1, section: 0)
+              toDoListTableView.insertRows(at: [indexPath], with: .automatic)
+              
+              if let cell = toDoListTableView.cellForRow(at: indexPath) {
+                  cell.textLabel?.text = newTodo.title
+                  cell.accessoryType = newTodo.isCompleted ? .checkmark : .none
+              }
+          }
+          
+          func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+              return toDoMemo.count
+          }
+          
+          func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+              let cell = tableView.dequeueReusableCell(withIdentifier: "TodoCell", for: indexPath)
+              let todo = toDoMemo[indexPath.row]
+              
+              cell.textLabel?.text = todo.title
+                  cell.accessoryType = todo.isCompleted ? .checkmark : .none
 
-}
+
+              return cell
+          }
+      }
+
+      extension ViewController: UITextFieldDelegate {
+          func textFieldDidEndEditing(_ textField: UITextField) {
+              if let text = textField.text, !text.isEmpty {
+                  let index = textField.tag
+                  toDoMemo[index].title = text
+              }
+          }
+          
+          func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+              textField.resignFirstResponder()
+              return true
+          }
+      }
